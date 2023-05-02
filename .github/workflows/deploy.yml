@@ -37,7 +37,7 @@ jobs:
 
         ###
 
-        profile=${{ inputs.config-path }}
+        profile=${{ inputs.profile }}
         connection_address=$(extract_value_or_exit '.connection.address')
         connection_user=$(extract_value_or_exit '.connection.user')
         connection_key_path=~/private_key
@@ -83,7 +83,7 @@ jobs:
 
         ###
 
-        profile=${{ inputs.config-path }}
+        profile=${{ inputs.profile }}
         rcon=$(extract_value_or_exit ".profiles.$profile.cod2.rconPassword")
         cod2_port=$(extract_value_or_exit ".profiles.$profile.cod2.port")
         connection_address=$(extract_value_or_exit '.connection.address')
