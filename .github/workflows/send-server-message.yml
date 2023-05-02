@@ -11,7 +11,8 @@ on:
         type: string
 
 jobs:
-  deploy:
+  send-server-message:
+    name: "Send message to server"
     runs-on: ubuntu-latest
 
     steps:
