@@ -1,0 +1,89 @@
+name: Restart server
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        type: string
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Send update message to server
+      run: |
+        project_definition="project-definition.json"
+        if [ ! -f $project_definition ]; then
+            echo "Error: $project_definition doesn't exist. Please use mynl CLI tool from within NL directory."
+            exit 1
+        fi
+
+        function extract_value_or_exit() {
+          local key=$1
+          local value=$(jq -r "$key" "$project_definition")
+
+          if [ "$value" = "null" ]; then
+              echo "Error: $key not found in the $project_definition file."
+              exit 1
+          fi
+
+          echo "$value"
+        }
+
+        ###
+
+        profile=${{ inputs.config-path }}
+        rcon=$(extract_value_or_exit ".profiles.$profile.cod2.rconPassword")
+        cod2_port=$(extract_value_or_exit ".profiles.$profile.cod2.port")
+        connection_address=$(extract_value_or_exit '.connection.address')
+
+        cmd="say ^8[UPDATE] ^9Server is ^7restarting^9, please use ^3/reconnect"
+        echo "Executing command '$cmd' for server $connection_address:$cod2_port"
+        echo -n -e "\xff\xff\xff\xffrcon $rcon $cmd" | nc -u -w 2 $connection_address $cod2_port
+
+    - name: Restart server
+      run: |
+        project_definition="project-definition.json"
+        if [ ! -f $project_definition ]; then
+            echo "Error: $project_definition doesn't exist. Please use mynl CLI tool from within NL directory."
+            exit 1
+        fi
+
+        function extract_value_or_exit() {
+          local key=$1
+          local value=$(jq -r "$key" "$project_definition")
+
+          if [ "$value" = "null" ]; then
+              echo "Error: $key not found in the $project_definition file."
+              exit 1
+          fi
+
+          echo "$value"
+        }
+
+        ###
+
+        profile=${{ inputs.config-path }}
+        restart_path=$(extract_value_or_exit ".profiles.$profile.restartPath")
+        connection_address=$(extract_value_or_exit '.connection.address')
+        connection_user=$(extract_value_or_exit '.connection.user')
+        connection_key_path=~/private_key
+        echo "Restarting at location $restart_path, host: $connection_user@$connection_address"
+
+        echo "${{ secrets.VPS_PRIVATE_KEY }}" > $connection_key_path
+        chmod 600 $connection_key_path
+        echo "Private key set up"
+
+        ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
+          cd $restart_path && \
+          echo 'Executing ./restart.sh detach...' && \
+          ./restart.sh detach"
+
+        rm -f $connection_key_path
+      env:
+        PRIVATE_KEY: ${{ secrets.VPS_PRIVATE_KEY }}
