@@ -1,4 +1,4 @@
-name: Restart server
+name: Restart
 
 on:
   workflow_call:
@@ -9,6 +9,7 @@ on:
 
 jobs:
   send-message:
+    name: Send restart message to server
     uses: nl-squad/nl-cod2-workflows/.github/workflows/send-server-message.yml@main
     with:
       profile: default
@@ -16,6 +17,7 @@ jobs:
     secrets: inherit
 
   restart:
+    name: Restart
     runs-on: ubuntu-latest
     needs: send-message
 
