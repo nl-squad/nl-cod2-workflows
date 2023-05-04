@@ -56,7 +56,7 @@ jobs:
         exclude_list=($(jq -r ".profiles.\"$profile\".rsyncExclude | .[]" "$project_definition"))
         rsync_exclude_options=""
         for exclude_item in "${exclude_list[@]}"; do
-            rsync_exclude_options+=" --exclude=$exclude_item"
+            rsync_exclude_options+=" --exclude='$exclude_item'"
         done
         echo "Deploying to: $connection_user@$connection_address:$deployment_remote_path"
         echo "Exclude options: $rsync_exclude_options"
