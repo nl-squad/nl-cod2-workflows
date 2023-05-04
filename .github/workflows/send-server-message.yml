@@ -42,8 +42,8 @@ jobs:
         ###
 
         profile=${{ inputs.profile }}
-        rcon=$(extract_value_or_exit ".profiles.\"$profile\".cod2.rconPassword")
-        cod2_port=$(extract_value_or_exit ".profiles.\"$profile\".cod2.port")
+        rcon=$(extract_value_or_exit ".profiles.\"$profile\".cod2.rconPassword") || { echo "Skipping - no rcon password found"; exit 0; }
+        cod2_port=$(extract_value_or_exit ".profiles.\"$profile\".cod2.port") || { echo "Skipping - no cod2 port found"; exit 0; }
         connection_address=$(extract_value_or_exit '.connection.address')
 
         cmd="say ${{ inputs.message }}"
