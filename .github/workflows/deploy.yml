@@ -54,19 +54,16 @@ jobs:
         deployment_remote_path=$(extract_value_or_exit ".profiles.\"$profile\".remoteDeploymentPath")
         deployment_local_path=$(extract_value_or_exit ".profiles.\"$profile\".localDeploymentPath")
         exclude_list=($(jq -r ".profiles.\"$profile\".rsyncExclude | .[]" "$project_definition"))
-        rsync_exclude_options=""
         for exclude_item in "${exclude_list[@]}"; do
-            rsync_exclude_options+=" --exclude=$exclude_item"
+          exclude_options+=("--exclude=$exclude_item")
         done
         echo "Deploying to: $connection_user@$connection_address:$deployment_remote_path"
-        echo "Exclude options: $rsync_exclude_options"
+        echo "Exclude options: $exclude_options"
 
         echo "${{ secrets.VPS_PRIVATE_KEY }}" > $connection_key_path
         chmod 600 $connection_key_path
         echo "Private key set up"
 
-        ls -la $deployment_local_path
-        echo "rsync -az -e \"ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" --progress --delete ${exclude_options[@]} ./* $connection_user@$connection_address:$deployment_remote_path"
         (cd $deployment_local_path && rsync -az -e "ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress --delete ${exclude_options[@]} ./* $connection_user@$connection_address:$deployment_remote_path)
 
         rm -f $connection_key_path
