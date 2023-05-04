@@ -57,13 +57,14 @@ jobs:
         for exclude_item in "${exclude_list[@]}"; do
           exclude_options+=("--exclude=$exclude_item")
         done
+        echo "Deploying from: $deployment_local_path"
         echo "Deploying to: $connection_user@$connection_address:$deployment_remote_path"
-        echo "Exclude options: $exclude_options"
 
         echo "${{ secrets.VPS_PRIVATE_KEY }}" > $connection_key_path
         chmod 600 $connection_key_path
         echo "Private key set up"
 
+        echo "rsync -az -e \"ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" --progress --delete ${exclude_options[@]} ./* $connection_user@$connection_address:$deployment_remote_path"
         (cd $deployment_local_path && rsync -az -e "ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress --delete ${exclude_options[@]} ./* $connection_user@$connection_address:$deployment_remote_path)
 
         rm -f $connection_key_path
