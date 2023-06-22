@@ -49,6 +49,7 @@ jobs:
 
         profile=${{ inputs.profile }}
         restart_path=$(extract_value_or_exit ".profiles.\"$profile\".restartPath")
+        restart_docker_compose=$(extract_value_or_exit ".profiles.\"$profile\".restartDockerCompose")
         connection_address=$(extract_value_or_exit '.connection.address')
         connection_user=$(extract_value_or_exit '.connection.user')
         project=$(extract_value_or_exit ".profiles.\"$profile\".containerName")
@@ -64,7 +65,7 @@ jobs:
           echo 'Displaying logs...' && \
           docker logs --tail 500 $project && \
           echo 'Executing ./restart.sh detach...' && \
-          ./restart.sh detach"
+          ./restart.sh $restart_docker_compose detach"
 
         rm -f $connection_key_path
       env:
