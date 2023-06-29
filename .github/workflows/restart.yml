@@ -85,7 +85,7 @@ jobs:
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
           cd $restart_path && \
           echo 'Displaying logs...' && \
-          docker logs --tail 500 $project && \
+          docker logs --tail 500 $project || echo 'Skipping - no such container: $project' && \
           echo 'Executing ./restart.sh detach...' && \
           ./restart.sh $restart_docker_compose detach"
 
