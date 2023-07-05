@@ -6,6 +6,9 @@ on:
       profile:
         required: true
         type: string
+      branch:
+        required: true
+        type: string
 
 jobs:
   deploy:
@@ -15,6 +18,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      with:
+        ref: ${{ inputs.branch }}
 
     - name: Send message to server
       run: |
