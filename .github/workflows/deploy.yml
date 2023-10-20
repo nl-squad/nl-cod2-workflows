@@ -12,6 +12,10 @@ on:
       sha:
         required: false
         type: string
+      pack:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   deploy:
@@ -54,6 +58,66 @@ jobs:
         cmd="say ^8[UPDATE] ^7Continous deployment ^9updated mod version"
         echo "Executing command '$cmd' for server $connection_address:$cod2_port"
         echo -n -e "\xff\xff\xff\xffrcon $rcon $cmd" | nc -u -w 2 $connection_address $cod2_port
+
+    - name: Build .iwd files
+      if: ${{ inputs.pack }}
+      run: |
+        project_definition="project-definition.json"
+        if [ ! -f $project_definition ]; then
+            echo "Error: $project_definition doesn't exist. Please use mynl CLI tool from within NL directory."
+            exit 1
+        fi
+
+        function extract_value_or_exit() {
+          local key=$1
+          local value=$(jq -r "$key" "$project_definition")
+
+          if [ "$value" = "null" ]; then
+              echo "Error: $key not found in the $project_definition file."
+              exit 1
+          fi
+
+          echo "$value"
+        }
+
+        ###
+
+        profile=${{ inputs.profile }}
+        iwds_path=$(extract_value_or_exit ".profiles.\"$profile\".cod2.iwdsPath") || { echo $iwds_path; exit $?; }
+
+        echo "Packing directories from 'iwds' to '$iwds_path' iwd files"
+        for iwd_folder in iwds/*.iwd/; do
+            base_foldername=$(basename "$iwd_folder")
+            tmp_iwd_path=$(realpath "iwds/$base_foldername.tmp")
+            iwd_path="$iwds_path/$base_foldername"
+
+            temp_dir="iwds/$base_foldername.temp"
+            mkdir -p "$temp_dir"
+
+            for subfolder in "$iwd_folder"*; do
+                for inner_subfolder in "$subfolder"/*; do
+                    relative_path="${inner_subfolder#$subfolder/}"
+                    mkdir -p "$temp_dir/$relative_path"
+                    cp -R "$inner_subfolder/"* "$temp_dir/$relative_path"
+                done
+            done
+
+            find "$temp_dir" -type f -exec touch -t 202201010000.00 {} +
+            (cd "$temp_dir" && find . -type f \! -name ".DS_Store" | sort | zip -q -X -r -@ "$tmp_iwd_path")
+
+            rm -rf "$temp_dir"
+
+            new_iwd_sha=$(sha256sum $tmp_iwd_path | awk '{print $1}')
+            old_iwd_sha=$(sha256sum $iwd_path | awk '{print $1}')
+
+            if [[ "$new_iwd_sha" != "$old_iwd_sha" ]]; then
+                mv $tmp_iwd_path $iwd_path
+                echo "Packed: $iwd_path"    
+            else
+                rm $tmp_iwd_path
+                echo "Unchanged: $iwd_path"
+            fi
+        done
 
     - name: Deploy server files
       run: |
