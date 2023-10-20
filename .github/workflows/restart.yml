@@ -70,24 +70,24 @@ jobs:
         ###
 
         profile=${{ inputs.profile }}
-        restart_path=$(extract_value_or_exit ".profiles.\"$profile\".restartPath")
-        restart_docker_compose=$(extract_value_or_exit ".profiles.\"$profile\".restartDockerCompose")
+        execute_path=$(extract_value_or_exit ".profiles.\"$profile\".restartPath")
+        execute_docker_compose=$(extract_value_or_exit ".profiles.\"$profile\".restartDockerCompose")
         connection_address=$(extract_value_or_exit '.connection.address')
         connection_user=$(extract_value_or_exit '.connection.user')
         project=$(extract_value_or_exit ".profiles.\"$profile\".containerName")
         connection_key_path=~/private_key
-        echo "Restarting at location $restart_path, host: $connection_user@$connection_address"
+        echo "Executing at location $execute_path, host: $connection_user@$connection_address"
 
         echo "${{ secrets.VPS_PRIVATE_KEY }}" > $connection_key_path
         chmod 600 $connection_key_path
         echo "Private key set up"
 
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
-          cd $restart_path && \
+          cd $execute_path && \
           echo 'Displaying logs...' && \
           docker logs --tail 500 $project || echo 'Skipping - no such container: $project' && \
           echo 'Executing ./restart.sh detach...' && \
-          ./restart.sh $restart_docker_compose detach"
+          ./restart.sh $execute_docker_compose detach"
 
         rm -f $connection_key_path
       env:

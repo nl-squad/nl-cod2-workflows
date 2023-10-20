@@ -71,19 +71,19 @@ jobs:
         ###
 
         profile=${{ inputs.profile }}
-        restart_path=$(extract_value_or_exit ".profiles.\"$profile\".restartPath")
+        execute_path=$(extract_value_or_exit ".profiles.\"$profile\".restartPath")
         connection_address=$(extract_value_or_exit '.connection.address')
         connection_user=$(extract_value_or_exit '.connection.user')
         project=$(extract_value_or_exit ".profiles.\"$profile\".containerName")
         connection_key_path=~/private_key
-        echo "Stopping at location $restart_path, host: $connection_user@$connection_address"
+        echo "Stopping at location $execute_path, host: $connection_user@$connection_address"
 
         echo "${{ secrets.VPS_PRIVATE_KEY }}" > $connection_key_path
         chmod 600 $connection_key_path
         echo "Private key set up"
 
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
-          cd $restart_path && \
+          cd $execute_path && \
           echo 'Displaying logs...' && \
           docker logs --tail 500 $project && \
           echo 'Executing docker-compose down...' && \
