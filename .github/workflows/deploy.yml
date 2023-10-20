@@ -9,6 +9,9 @@ on:
       branch:
         required: true
         type: string
+      sha:
+        required: false
+        type: string
 
 jobs:
   deploy:
@@ -19,7 +22,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
-        ref: ${{ inputs.branch }}
+        ref: ${{ inputs.sha || github.event.inputs.branch || 'main' }}
 
     - name: Send message to server
       run: |
