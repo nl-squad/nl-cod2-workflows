@@ -16,6 +16,10 @@ on:
         required: false
         type: boolean
         default: false
+      set_passwords:
+        required: false
+        type: boolean
+        default: false
       rcon_password:
         required: false
         type: string
@@ -129,6 +133,7 @@ jobs:
         done
 
     - name: Set g_password
+      if: ${{ inputs.set_passwords }}
       run: |
         if [ "${{ inputs.g_password }}" != " " ]; then
           echo "Setting g_password"
@@ -139,6 +144,7 @@ jobs:
         fi
 
     - name: Set rcon_password
+      if: ${{ inputs.set_passwords }}
       run: |
         echo "Setting rcon_password"
         sed -i 's/set rcon_password ".*"/set rcon_password "${{ inputs.rcon_password }}"/' src/nl/${{ inputs.cfg_file }}
