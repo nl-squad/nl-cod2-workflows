@@ -16,6 +16,15 @@ on:
         required: false
         type: boolean
         default: false
+      rcon_password:
+        required: false
+        type: string
+      g_password:
+        required: false
+        type: string
+      cfg_file:
+        required: false
+        type: string
 
 jobs:
   deploy:
@@ -119,6 +128,21 @@ jobs:
             fi
         done
 
+    - name: Set g_password
+      run: |
+        if [ "${{ inputs.g_password }}" != " " ]; then
+          echo "Setting g_password"
+          sed -i 's/set g_password ".*"/set g_password "${{ inputs.g_password }}"/' src/nl/${{ inputs.cfg_file }}
+        else
+          echo "Clearing g_password"
+          sed -i 's/set g_password ".*"/set g_password ""/' src/nl/${{ inputs.cfg_file }}
+        fi
+
+    - name: Set rcon_password
+      run: |
+        echo "Setting rcon_password"
+        sed -i 's/set rcon_password ".*"/set rcon_password "${{ inputs.rcon_password }}"/' src/nl/${{ inputs.cfg_file }}
+      
     - name: Deploy server files
       run: |
         project_definition="project-definition.json"
