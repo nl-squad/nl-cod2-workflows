@@ -144,7 +144,7 @@ jobs:
       run: |
         if [ "$g_password" != " " ]; then
           echo "Setting g_password"
-          sed -i 's/set g_password ".*"/set g_password "$g_password"/' src/nl/${{ inputs.cfg_file }}
+          sed -i "s/set g_password \".*\"/set g_password \"$g_password\"/" src/nl/${{ inputs.cfg_file }}
         else
           echo "Clearing g_password"
           sed -i 's/set g_password ".*"/set g_password ""/' src/nl/${{ inputs.cfg_file }}
@@ -154,7 +154,7 @@ jobs:
       if: ${{ inputs.set_passwords }}
       run: |
         echo "Setting rcon_password"
-        sed -i 's/set rcon_password ".*"/set rcon_password "$rcon_password"/' src/nl/${{ inputs.cfg_file }}
+        sed -i "s/set rcon_password \".*\"/set rcon_password \"$rcon_password\"/" src/nl/${{ inputs.cfg_file }}
       
     - name: Deploy server files
       run: |
