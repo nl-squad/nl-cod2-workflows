@@ -20,12 +20,6 @@ on:
         required: false
         type: boolean
         default: false
-      rcon_password:
-        required: false
-        type: string
-      g_password:
-        required: false
-        type: string
       cfg_file:
         required: false
         type: string
@@ -40,6 +34,19 @@ jobs:
       uses: actions/checkout@v2
       with:
         ref: ${{ inputs.sha || github.event.inputs.branch || 'main' }}
+
+    - name: Set passwords based on profile
+      id: set-passwords
+      run: |
+        if [ "${{ inputs.profile }}" == "public" ]; then
+          echo "Using PUBLIC passwords"
+          echo "rcon_password=${{ secrets.PUBLIC_RCON_PASSWORD }}" >> $GITHUB_ENV
+          echo "g_password=${{ secrets.PUBLIC_G_PASSWORD }}" >> $GITHUB_ENV
+        else
+          echo "Using DEV passwords"
+          echo "rcon_password=${{ secrets.DEV_RCON_PASSWORD }}" >> $GITHUB_ENV
+          echo "g_password=${{ secrets.DEV_G_PASSWORD }}" >> $GITHUB_ENV
+        fi
 
     - name: Send message to server
       run: |
@@ -64,7 +71,7 @@ jobs:
         ###
 
         profile=${{ inputs.profile }}
-        rcon=$(extract_value_or_exit ".profiles.\"$profile\".cod2.rconPassword") || { echo "Skipping - no rcon password found"; exit 0; }
+        rcon=$rcon_password
         cod2_port=$(extract_value_or_exit ".profiles.\"$profile\".cod2.port") || { echo "Skipping - no cod2 port found"; exit 0; }
         connection_address=$(extract_value_or_exit '.connection.address')
 
@@ -135,9 +142,9 @@ jobs:
     - name: Set g_password
       if: ${{ inputs.set_passwords }}
       run: |
-        if [ "${{ inputs.g_password }}" != " " ]; then
+        if [ "$g_password" != " " ]; then
           echo "Setting g_password"
-          sed -i 's/set g_password ".*"/set g_password "${{ inputs.g_password }}"/' src/nl/${{ inputs.cfg_file }}
+          sed -i 's/set g_password ".*"/set g_password "$g_password"/' src/nl/${{ inputs.cfg_file }}
         else
           echo "Clearing g_password"
           sed -i 's/set g_password ".*"/set g_password ""/' src/nl/${{ inputs.cfg_file }}
@@ -147,7 +154,7 @@ jobs:
       if: ${{ inputs.set_passwords }}
       run: |
         echo "Setting rcon_password"
-        sed -i 's/set rcon_password ".*"/set rcon_password "${{ inputs.rcon_password }}"/' src/nl/${{ inputs.cfg_file }}
+        sed -i 's/set rcon_password ".*"/set rcon_password "$rcon_password"/' src/nl/${{ inputs.cfg_file }}
       
     - name: Deploy server files
       run: |
