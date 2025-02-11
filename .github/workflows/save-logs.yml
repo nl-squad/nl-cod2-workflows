@@ -54,8 +54,8 @@ jobs:
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
           cd $execute_path && \
           echo 'Displaying logs...' && \
-          docker logs --tail 2000 $project || echo 'Skipping - no such container: $project'"
+          docker service logs ${project}_${project} --raw --tail 2000 || echo 'Skipping - no such container: $project'"
 
-        rm -f $connection_key_path
+          rm -f $connection_key_path
       env:
         PRIVATE_KEY: ${{ secrets.VPS_PRIVATE_KEY }}

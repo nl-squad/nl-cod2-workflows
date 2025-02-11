@@ -85,9 +85,9 @@ jobs:
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
           cd $execute_path && \
           echo 'Displaying logs...' && \
-          docker logs --tail 500 $project && \
-          echo 'Executing docker-compose down...' && \
-          docker-compose down"
+          docker service logs ${project}_${project} --raw --tail 500 || echo 'Skipping - no such container: $project' && \
+          echo 'Executing docker stack rm...' && \
+          docker stack rm $project"
 
         rm -f $connection_key_path
       env:
