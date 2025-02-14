@@ -86,6 +86,8 @@ jobs:
           cd $execute_path && \
           echo 'Displaying logs...' && \
           docker service logs ${project}_${project} --raw --tail 500 || echo 'Skipping - no such container: $project' && \
+          echo 'Removing stack '$project'...' && \
+          docker stack rm $project || echo 'Failed to remove stack' && \
           echo 'Executing ./restart.sh...' && \
           ./restart.sh $execute_docker_compose"
 
