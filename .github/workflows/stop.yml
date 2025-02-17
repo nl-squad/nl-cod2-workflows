@@ -75,6 +75,7 @@ jobs:
         connection_address=$(extract_value_or_exit '.connection.address')
         connection_user=$(extract_value_or_exit '.connection.user')
         project=$(extract_value_or_exit ".profiles.\"$profile\".containerName")
+        service=${project}_${project}
         connection_key_path=~/private_key
         echo "Stopping at location $execute_path, host: $connection_user@$connection_address"
 
@@ -84,8 +85,12 @@ jobs:
 
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
           cd $execute_path && \
-          echo 'Displaying logs...' && \
-          docker service logs ${project}_${project} --raw --tail 500 || echo 'Skipping - no such container: $project' && \
+          echo 'Getting task_id for service '$service && \
+          task_id=\$(docker service ps $service --filter 'desired-state=running' --format '{{.ID}}' -q) && \
+          echo 'Getting container_id for task '\$task_id && \
+          container_id=\$(docker inspect --format '{{.Status.ContainerStatus.ContainerID}}' \$task_id) && \
+          echo 'Displaying logs for container '\$container_id && \
+          docker logs --tail 500 \$container_id && \
           echo 'Executing docker stack rm...' && \
           docker stack rm $project"
 
