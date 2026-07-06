@@ -85,15 +85,19 @@ jobs:
 
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
           cd $execute_path && \
-          echo 'Getting task_id for service '$service && \
-          task_id=\$(docker service ps $service --filter 'desired-state=running' --format '{{.ID}}' -q) && \
-          if [ ! -z \"\$task_id\" ]; then \
-            echo 'Getting container_id for task '\$task_id && \
-            container_id=\$(docker inspect --format '{{.Status.ContainerStatus.ContainerID}}' \$task_id) && \
-            echo 'Displaying logs for container '\$container_id && \
-            docker logs --tail 500 \$container_id; \
+          if ! docker service inspect $service >/dev/null 2>&1; then \
+            echo 'Service '$service' does not exist yet - skipping logs'; \
           else \
-            echo 'No currently running container'; \
+            echo 'Getting task_id for service '$service && \
+            task_id=\$(docker service ps $service --filter 'desired-state=running' --format '{{.ID}}' -q) && \
+            if [ ! -z \"\$task_id\" ]; then \
+              echo 'Getting container_id for task '\$task_id && \
+              container_id=\$(docker inspect --format '{{.Status.ContainerStatus.ContainerID}}' \$task_id) && \
+              echo 'Displaying logs for container '\$container_id && \
+              docker logs --tail 500 \$container_id; \
+            else \
+              echo 'No currently running container'; \
+            fi; \
           fi"
 
         rm -f $connection_key_path
@@ -139,15 +143,19 @@ jobs:
         ssh -i $connection_key_path -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $connection_user@$connection_address "\
           cd $execute_path && \
           echo 'Checking for recent crashes...' && \
-          failed_task=\$(docker service ps $service --filter 'desired-state=shutdown' --format '{{.ID}} {{.CurrentState}}' | head -1) && \
-          if [ ! -z \"\$failed_task\" ]; then \
-            task_id=\$(echo \$failed_task | awk '{print \$1}') && \
-            state_info=\$(echo \$failed_task | cut -d' ' -f2-) && \
-            failed_container=\$(docker inspect --format '{{.Status.ContainerStatus.ContainerID}}' \$task_id) && \
-            docker logs --tail 500 \$failed_container && \
-            echo 'This is the crash: '\$state_info; \
+          if ! docker service inspect $service >/dev/null 2>&1; then \
+            echo 'Service '$service' does not exist yet - skipping crash logs'; \
           else \
-            echo 'No recent crashes found'; \
+            failed_task=\$(docker service ps $service --filter 'desired-state=shutdown' --format '{{.ID}} {{.CurrentState}}' | head -1) && \
+            if [ ! -z \"\$failed_task\" ]; then \
+              task_id=\$(echo \$failed_task | awk '{print \$1}') && \
+              state_info=\$(echo \$failed_task | cut -d' ' -f2-) && \
+              failed_container=\$(docker inspect --format '{{.Status.ContainerStatus.ContainerID}}' \$task_id) && \
+              docker logs --tail 500 \$failed_container && \
+              echo 'This is the crash: '\$state_info; \
+            else \
+              echo 'No recent crashes found'; \
+            fi; \
           fi"
 
         rm -f $connection_key_path
